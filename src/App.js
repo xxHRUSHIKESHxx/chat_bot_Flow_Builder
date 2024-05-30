@@ -1,25 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React, { useState, useCallback } from "react";
+import "./App.css";
+import NodesPanel from "./components/NodesPanel";
+import FlowCanvas from "./components/FlowCanvas";
+import SettingsPanel from "./components/SettingsPanel";
+import SaveButton from "./components/SaveButton";
+import { ReactFlowProvider } from "reactflow";
 
-function App() {
+const App = () => {
+  const [nodes, setNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const onUpdateNode = useCallback((updatedNode) => {
+    setNodes((nds) =>
+      nds.map((node) => (node.id === updatedNode.id ? updatedNode : node))
+    );
+    setSelectedNode(updatedNode);
+  }, []);
+
+  const onSave = useCallback(() => {
+    const unconnectedNodes = nodes.filter(
+      (node) => !node.targetEdges || node.targetEdges.length === 0
+    );
+    if (unconnectedNodes.length > 1) {
+      alert("More than one node has no connections.");
+    } else {
+      console.log("Flow saved:", nodes);
+    }
+  }, [nodes]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ReactFlowProvider>
+      <div className="App">
+        <div style={{display: 'flex', flexDirection: 'column'}} >
+          {selectedNode ? (
+            <SettingsPanel
+              selectedNode={selectedNode}
+              onUpdateNode={onUpdateNode}
+            />
+          ) : (
+            <NodesPanel
+              onAddNode={(node) => setNodes((nds) => nds.concat(node))}
+            />
+          )}
+          <SaveButton onSave={onSave} />
+        </div>
+
+        <FlowCanvas
+          nodes={nodes}
+          setNodes={setNodes}
+          onNodeSelect={setSelectedNode}
+        />
+      </div>
+    </ReactFlowProvider>
   );
-}
+};
 
 export default App;
